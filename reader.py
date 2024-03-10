@@ -8,26 +8,26 @@ from ftplib import FTP
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import *
-import adminpage
-
+# import adminpage
+import mysql.connector
 
 # Function to validate the login
 def validate_login():
     userid = username_entry.get()
-    password = password_entry.get()
+    # password = password_entry.get()
 
     # You can add your own validation logic here
-    if userid == "123" and password == "123":
+    if userid :
         root.destroy()
-        adminpage.welcomepage()
+        # adminpage.welcomepage()
     else:
-        messagebox.showerror("Login Failed", "Invalid username or password")
+        messagebox.showerror("Failed", "Filed! Please try again")
 
 def run_script():
     
 
     userid = username_entry.get()
-    password = password_entry.get()
+    # password = password_entry.get()
 
     
 
@@ -72,19 +72,19 @@ if __name__ == "__main__":
     title_label = tk.Label(frame, text="PDF Reader | CREDIT : SVJG", font=("Helvetica", 16))
     title_label.pack()
 
-    username_label = tk.Label(frame, text="Userid:")
+    username_label = tk.Label(frame, text="Branch Name:")
     username_label.pack()
 
     username_entry = tk.Entry(frame)
     username_entry.pack()
 
-    password_label = tk.Label(frame, text="Password:")
-    password_label.pack()
+    # password_label = tk.Label(frame, text="Password:")
+    # password_label.pack()
 
-    password_entry = tk.Entry(frame, show="*")
-    password_entry.pack()
+    # password_entry = tk.Entry(frame, show="*")
+    # password_entry.pack()
 
-    login_button = tk.Button(frame, text="Login", command=validate_login)
+    login_button = tk.Button(frame, text="Add", command=validate_login)
     login_button.pack()
 
     run_script()

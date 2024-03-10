@@ -7,6 +7,7 @@ import re
 from ftplib import FTP
 import tkinter as tk
 import shutil
+import mysql.connector
 
 def call_api(url, data):
     try:
@@ -91,8 +92,34 @@ def local_read_pdf(directory, pdf_file):
             page = reader.pages[page_num]
             text += page.extract_text()
     return text
+def CheckCommon():
+    message = ""
+    #check database connection
+    try:
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="test"
+            )
+    except Exception as e:
+        message = "db error"
+        root.destroy()
+        sys.exit(1)
+    
+    #Directory path check
+    directory_path = "C:\\pdf_reader"
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+    message = "ok"
+    return message
 
 def run_script(label1, label2,label3,label4,label5):
+
+    check_common = CheckCommon()
+    label5.config(text=check_common+"\n")
+    label5.update()
+
     label4.config(text="-- Started --\n")
     label4.update()
     first_text = "CREDIT : SVJG"    
@@ -149,11 +176,11 @@ def run_script(label1, label2,label3,label4,label5):
                 for apinumber in apiArray:
                     print (pdf_file,apinumber)
                     data = {
-                        'number': int(apinumber),
+                        'number': 919747065788,
                         'type':'media',
                         'message':'Dear Valued Client,Thank you for choosing Bin Khamis International Trading Company as your wholesaler. Attached is your invoice. We appreciate your partnership and look forward to serving you again soon!',
                         'media_url': livepath,
-                        'instance_id':'65D4BBD8EF4EF',
+                        'instance_id':'65D3031F5CA94',
                         'access_token':'65bb367d638b1',
                         }  # Your data to be passed to the API #65D4BBD8EF4EF - liive ####### #65D3031F5CA94 - test
                     #print(data)
@@ -185,7 +212,8 @@ def run_script(label1, label2,label3,label4,label5):
         label3.update()
     label4.config(text="-- All Completed: Next Run after 2min --\n")
     label4.update()
-    root.destroy()
+    # root.destroy()
+
 # def run_script_periodically():
 #     run_script(credential_label1, credential_label2, credential_label3, credential_label4,credential_label5)
 #     # Schedule the next run after 2 minutes (120,000 milliseconds)

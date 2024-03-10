@@ -16,13 +16,65 @@ def validate_login():
     userid = username_entry.get()
     # password = password_entry.get()
 
-    # You can add your own validation logic here
+    # API 
     if userid :
-        root.destroy()
+        url = 'http://192.168.43.187/pdfadmin/API/create_branch.php'
+        data = {
+                'branch': userid,
+            }
+        result = call_api(url, data)
+        if result['Message']:
+            if result['Message']['Code'] == 200:
+                code = result['Message']['key']
+                file_path = r"C:\pdf_reader\key.txt"
+                if os.path.exists(file_path):
+                    try:
+                        with open(file_path, "a+") as f:
+                            f.seek(0)  # Move the cursor to the beginning of the file
+                            existing_content = f.read()
+                            if existing_content:
+                                f.truncate(0)
+                                f.write(code)
+                            else:
+                                f.write(code)
+                    except Exception as e:
+                        messagebox.showerror("Failed", f"Error occurred while creating or updating file: {e}")
+                else:
+                    try:
+                        with open(file_path, "w") as f:
+                            f.write(code)
+                    except Exception as e:
+                        messagebox.showerror("Failed", f"Error occurred while creating or updating file: {e}")
+                messagebox.showinfo("Success", "Successfully registered..")
+                root.destroy()
+            else:
+                messagebox.showerror("Failed", result['Message']['Message'])
+            
+        else:
+            messagebox.showerror("Failed", "Api Filed! Please try again")
+
+        # root.destroy()
         # adminpage.welcomepage()
     else:
-        messagebox.showerror("Failed", "Filed! Please try again")
+        messagebox.showerror("Failed", "Please fill branch name")
 
+def call_api(url, data):
+    try:
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            # If the request was successful, return the response content
+            return response.json()
+        else:
+            # If there was an error, print the error code and message
+            print(f"Error: {response.status_code}, {response.text}")
+            messagebox.showerror("Failed", f"Error: {response.status_code}, {response.text}")
+            return False
+    except Exception as e:
+        # If an exception occurs, print the exception
+        print(f"Exception: {e}")
+        messagebox.showerror("Failed", f"Exception: {e}")
+        return False
+        
 def run_script():
     
 

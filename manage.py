@@ -8,6 +8,9 @@ from ftplib import FTP
 import tkinter as tk
 import shutil
 import mysql.connector
+from tkinter import messagebox
+from googletrans import Translator
+import ast
 
 def call_api(url, data):
     try:
@@ -92,8 +95,12 @@ def local_read_pdf(directory, pdf_file):
             page = reader.pages[page_num]
             text += page.extract_text()
     return text
+def translate_to_arabic(text):
+    translator = Translator()
+    translated = translator.translate(text, src='en', dest='ar')
+    return translated.text
 def CheckCommon():
-    message = ""
+    key = ""
     #check database connection
     try:
         mydb = mysql.connector.connect(
@@ -111,26 +118,90 @@ def CheckCommon():
     directory_path = "C:\\pdf_reader"
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
-    message = "ok"
-    return message
 
+    file_path = r"C:\pdf_reader\key.txt"
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "a+") as f:
+                f.seek(0)
+                existing_content = f.read()
+                if existing_content:
+                    url = 'http://192.168.43.187/pdfadmin/API/validate_code.php'
+                    data = {
+                            'code': existing_content,
+                        }
+                    result = call_api(url, data)
+                    if result['Message']:
+                        if result['Message']['Code'] == 200:
+                            key = existing_content
+                        else:
+                            message = "Invalid Key"
+                            messagebox.showerror("Failed", message)
+                            root.destroy()
+                            sys.exit(1)
+                    else:
+                        message = "Api Falied"
+                        messagebox.showerror("Failed", message)
+                        root.destroy()
+                        sys.exit(1)
+                else:
+                    message = "Key is empty"
+                    messagebox.showerror("Failed", message)
+                    root.destroy()
+                    sys.exit(1)
+        except Exception as e:
+            message = "Key file is missing or can't read"
+            messagebox.showerror("Failed", message)
+            root.destroy()
+            sys.exit(1)
+    return key
+def getConstants(key):
+    url = 'http://192.168.43.187/pdfadmin/API/getConstant.php'
+    data = {
+            'code': key,
+        }
+    result = call_api(url, data)
+    if result['Message']:
+        if result['Message']['Code'] == 200:
+            return result['Message']['content']
+        else:
+            messagebox.showerror("Failed", message)
+            root.destroy()
+            sys.exit(1)
+    else:
+        message = "Api Falied"
+        messagebox.showerror("Failed", result['Message']['Message'])
+        root.destroy()
+        sys.exit(1)
 def run_script(label1, label2,label3,label4,label5):
 
-    check_common = CheckCommon()
-    label5.config(text=check_common+"\n")
+    key = CheckCommon()
+    label5.config(text=key+"\n")
     label5.update()
+
+    
+
+    get_constants = getConstants(key)
+    livePdfPath = get_constants['pdfpath']
+    liveFtpCreds = get_constants['ftpcred']
+    liveApiCreds = get_constants['apicred']
+    addPhoneNumbers = get_constants['addphones']
+    
 
     label4.config(text="-- Started --\n")
     label4.update()
     first_text = "CREDIT : SVJG"    
     label1.config(text=first_text)
-    directory = 'D:/2024/PDF/'
+
+    ################START eng msgs  ###################################
+    directory = livePdfPath['english_path']
     try:
         localfiles = os.listdir(directory)
     except Exception as e:
         print("Error accessing directory:", e)
         root.destroy()
         sys.exit(1)
+        
     pdf_files = [file for file in localfiles if file.lower().endswith('.pdf')]
     for pdf_file in pdf_files:
         
@@ -148,13 +219,10 @@ def run_script(label1, label2,label3,label4,label5):
                 finalNumber = int(finalNumber)
                 
                 ###### Connect to FTP server###########################################
-                ftp_server = ''
-                ftp_user = ''
-                ftp_password = ''
 
-                ftp_server ='ftp.wmsv4.stallionsoft.com'
-                ftp_user = 'user@pdf.wmsv4.stallionsoft.com'
-                ftp_password = 'Pdfreader@123'
+                ftp_server =liveFtpCreds['server']
+                ftp_user = liveFtpCreds['user']
+                ftp_password = liveFtpCreds['password']
                 try:
                     ftp = FTP(ftp_server, timeout=60)
                     ftp.login(ftp_user, ftp_password)
@@ -169,19 +237,22 @@ def run_script(label1, label2,label3,label4,label5):
                     root.destroy()
                     sys.exit(1)
                 #####FTP ENDS ###########################################################
-                livepath = 'https://pdf.wmsv4.stallionsoft.com/public/invoices/' + str(pdf_file)
-                url = 'https://pingerbot.in/api/send'
-                # apiArray = [919747065788]
-                apiArray = [finalNumber,966538530413]
+                livepath = liveApiCreds['media_url'] + str(pdf_file)
+                url = liveApiCreds['url']
+                finalNumber = 919037000149
+                phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
+                phone_numbers_lists.append(finalNumber)
+                apiArray = phone_numbers_lists
+                # apiArray = [finalNumber,966538530413]
                 for apinumber in apiArray:
                     print (pdf_file,apinumber)
                     data = {
-                        'number': 919747065788,
+                        'number': apinumber,
                         'type':'media',
-                        'message':'Dear Valued Client,Thank you for choosing Bin Khamis International Trading Company as your wholesaler. Attached is your invoice. We appreciate your partnership and look forward to serving you again soon!',
+                        'message':liveApiCreds['english_content'],
                         'media_url': livepath,
-                        'instance_id':'65D3031F5CA94',
-                        'access_token':'65bb367d638b1',
+                        'instance_id':liveApiCreds['instance_id'],
+                        'access_token':liveApiCreds['access_token'],
                         }  # Your data to be passed to the API #65D4BBD8EF4EF - liive ####### #65D3031F5CA94 - test
                     #print(data)
                     result = call_api(url, data)
@@ -210,14 +281,106 @@ def run_script(label1, label2,label3,label4,label5):
             ######################################################
         label3.config(text=f"Message: {pdf_file} executed succesfully\n")
         label3.update()
+    
+    ################END eng msgs  ###################################
+        
+    ################START Arabic msgs  ###################################
+    directory = livePdfPath['arabic_path']
+    try:
+        localfiles = os.listdir(directory)
+    except Exception as e:
+        print("Error accessing directory:", e)
+        root.destroy()
+        sys.exit(1)
+        
+    pdf_files = [file for file in localfiles if file.lower().endswith('.pdf')]
+    for pdf_file in pdf_files:
+        
+        label2.config(text=f"Message:Executing {pdf_file} \n")
+        label2.update()
+        pdf_text = local_read_pdf(directory, pdf_file)
+        
+        if pdf_text:
+            numbers = re.findall(r'\b\d+\b', pdf_text)
+            filtered_numbers = [num for num in numbers if len(num) == 10 and num.startswith('05')]
+            filtered_numbers = list(set(filtered_numbers))
+            for num in filtered_numbers:
+                removeFirstZero = num[1:]
+                finalNumber = '966' + removeFirstZero 
+                finalNumber = int(finalNumber)
+                
+                ###### Connect to FTP server###########################################
+
+                ftp_server =liveFtpCreds['server']
+                ftp_user = liveFtpCreds['user']
+                ftp_password = liveFtpCreds['password']
+                try:
+                    ftp = FTP(ftp_server, timeout=60)
+                    ftp.login(ftp_user, ftp_password)
+                    with open(os.path.join(directory, pdf_file), 'rb') as file:
+                        ftp.storbinary('STOR ' + pdf_file, file)
+                        # Delete file from local server                        
+                        print("File Stored in FTP")
+                    ftp.quit()
+                    os.remove(os.path.join(directory, pdf_file))
+                except Exception as e:
+                    print("An error occurred:", e)
+                    root.destroy()
+                    sys.exit(1)
+                #####FTP ENDS ###########################################################
+                livepath = liveApiCreds['media_url'] + str(pdf_file)
+                url = liveApiCreds['url']
+                finalNumber = 919037000149
+                phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
+                phone_numbers_lists.append(finalNumber)
+                apiArray = phone_numbers_lists
+                # apiArray = [finalNumber,966538530413]
+                arabic_translation = translate_to_arabic(liveApiCreds['arabic_content'])
+                for apinumber in apiArray:
+                    print (pdf_file,apinumber)
+                    data = {
+                        'number': apinumber,
+                        'type':'media',
+                        'message': arabic_translation,
+                        'media_url': livepath,
+                        'instance_id':liveApiCreds['instance_id'],
+                        'access_token':liveApiCreds['access_token'],
+                        }  # Your data to be passed to the API #65D4BBD8EF4EF - liive ####### #65D3031F5CA94 - test
+                    #print(data)
+                    result = call_api(url, data)
+                try:
+                    ftp = FTP(ftp_server, timeout=60)
+                    ftp.login(ftp_user, ftp_password)
+                    ftp.delete(pdf_file)
+                    ftp.quit()
+                except Exception as e:
+                    print("An error occurred:", e)
+                    root.destroy()
+                    sys.exit(1)
+                    #print(result)
+            ###########################################################
+            if  not filtered_numbers:
+                try:
+                    error_directory = os.path.join(directory, "ERROR")
+                    if not os.path.exists(error_directory):
+                        os.makedirs(error_directory)  # Create the ERROR directory if it doesn't exist
+                    shutil.move(os.path.join(directory, pdf_file), os.path.join(error_directory, pdf_file))
+                except Exception as e:
+                    print("Error accessing directory:", e)
+                    root.destroy()
+                    sys.exit(1)
+
+            ######################################################
+        label3.config(text=f"Message: {pdf_file} executed succesfully\n")
+        label3.update()
+    
+    ################END Arabic msgs  ###################################
+    
     label4.config(text="-- All Completed: Next Run after 2min --\n")
     label4.update()
     # root.destroy()
 
-# def run_script_periodically():
-#     run_script(credential_label1, credential_label2, credential_label3, credential_label4,credential_label5)
-#     # Schedule the next run after 2 minutes (120,000 milliseconds)
-#     root.after(120000, run_script_periodically)
+
 
 if __name__ == "__main__":
 

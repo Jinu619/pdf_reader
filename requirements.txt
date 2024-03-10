@@ -4,4 +4,5 @@ pip install regex
 pip install pyftpdlib
 pip install mysql
 pip install mysql-connector-python
+pip install googletrans==4.0.0-rc1
 

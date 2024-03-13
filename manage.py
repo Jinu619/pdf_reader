@@ -335,7 +335,8 @@ def run_script(label1, label2,label3,label4,label5):
                 phone_numbers_lists.append(finalNumber)
                 apiArray = phone_numbers_lists
                 # apiArray = [finalNumber,966538530413]
-                arabic_translation = translate_to_arabic(liveApiCreds['arabic_content'])
+                # arabic_translation = translate_to_arabic(liveApiCreds['arabic_content'])
+                arabic_translation = liveApiCreds['arabic_content']
                 for apinumber in apiArray:
                     print (pdf_file,apinumber)
                     data = {

@@ -102,17 +102,7 @@ def translate_to_arabic(text):
 def CheckCommon():
     key = ""
     #check database connection
-    try:
-        mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="test"
-            )
-    except Exception as e:
-        message = "db error"
-        root.destroy()
-        sys.exit(1)
+    
     
     #Directory path check
     directory_path = "C:\\pdf_reader"
@@ -136,25 +126,38 @@ def CheckCommon():
                             key = existing_content
                         else:
                             message = "Invalid Key"
+                            errorLog('','key', message)
                             messagebox.showerror("Failed", message)
                             root.destroy()
                             sys.exit(1)
                     else:
                         message = "Api Falied"
+                        errorLog('','Api', message)
                         messagebox.showerror("Failed", message)
                         root.destroy()
                         sys.exit(1)
                 else:
                     message = "Key is empty"
+                    errorLog('','keyisempty', message)
                     messagebox.showerror("Failed", message)
                     root.destroy()
                     sys.exit(1)
         except Exception as e:
             message = "Key file is missing or can't read"
+            errorLog('','keyfile', message)
             messagebox.showerror("Failed", message)
             root.destroy()
             sys.exit(1)
     return key
+def errorLog(branch,error, message):
+    url = 'http://192.168.43.187/pdfadmin/API/getConstant.php'
+    data = {
+            'branch': branch,
+            'error': error,
+            'message': message
+        }
+    result = call_api(url, data)
+
 def getConstants(key):
     url = 'http://192.168.43.187/pdfadmin/API/getConstant.php'
     data = {
@@ -165,11 +168,13 @@ def getConstants(key):
         if result['Message']['Code'] == 200:
             return result['Message']['content']
         else:
+            errorLog('','key', message)
             messagebox.showerror("Failed", message)
             root.destroy()
             sys.exit(1)
     else:
         message = "Api Falied"
+        errorLog('','api', message)
         messagebox.showerror("Failed", result['Message']['Message'])
         root.destroy()
         sys.exit(1)
@@ -199,6 +204,7 @@ def run_script(label1, label2,label3,label4,label5):
         localfiles = os.listdir(directory)
     except Exception as e:
         print("Error accessing directory:", e)
+        errorLog('','dir', "Directory error")
         root.destroy()
         sys.exit(1)
         
@@ -234,6 +240,7 @@ def run_script(label1, label2,label3,label4,label5):
                     os.remove(os.path.join(directory, pdf_file))
                 except Exception as e:
                     print("An error occurred:", e)
+                    errorLog(key,'ftp', "ftp error")
                     root.destroy()
                     sys.exit(1)
                 #####FTP ENDS ###########################################################
@@ -263,6 +270,7 @@ def run_script(label1, label2,label3,label4,label5):
                     ftp.quit()
                 except Exception as e:
                     print("An error occurred:", e)
+                    errorLog(key,'ftp', "ftp error")
                     root.destroy()
                     sys.exit(1)
                     #print(result)
@@ -275,6 +283,7 @@ def run_script(label1, label2,label3,label4,label5):
                     shutil.move(os.path.join(directory, pdf_file), os.path.join(error_directory, pdf_file))
                 except Exception as e:
                     print("Error accessing directory:", e)
+                    errorLog(key,'file moving', "File moving failed")
                     root.destroy()
                     sys.exit(1)
 
@@ -290,6 +299,7 @@ def run_script(label1, label2,label3,label4,label5):
         localfiles = os.listdir(directory)
     except Exception as e:
         print("Error accessing directory:", e)
+        errorLog(key,'dir', e)
         root.destroy()
         sys.exit(1)
         
@@ -325,6 +335,7 @@ def run_script(label1, label2,label3,label4,label5):
                     os.remove(os.path.join(directory, pdf_file))
                 except Exception as e:
                     print("An error occurred:", e)
+                    errorLog(key,'ftp', e)
                     root.destroy()
                     sys.exit(1)
                 #####FTP ENDS ###########################################################
@@ -356,6 +367,7 @@ def run_script(label1, label2,label3,label4,label5):
                     ftp.quit()
                 except Exception as e:
                     print("An error occurred:", e)
+                    errorLog(key,'ftp', e)
                     root.destroy()
                     sys.exit(1)
                     #print(result)
@@ -368,6 +380,7 @@ def run_script(label1, label2,label3,label4,label5):
                     shutil.move(os.path.join(directory, pdf_file), os.path.join(error_directory, pdf_file))
                 except Exception as e:
                     print("Error accessing directory:", e)
+                    errorLog(key,'ftp', e)
                     root.destroy()
                     sys.exit(1)
 

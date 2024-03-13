@@ -8,55 +8,31 @@ from ftplib import FTP
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import *
+import zipfile
+import io
 # import adminpage
-import mysql.connector
+
 
 # Function to validate the login
 def validate_login():
-    userid = username_entry.get()
-    # password = password_entry.get()
+    url = url_entry.get()
+    response = requests.get(url)
 
+    save_path = os.path.join(os.getcwd(), "downloaded_file.zip")
+    print(save_path)
+
+    with open(save_path, 'wb') as f:
+        f.write(response.content)
+    
+    with zipfile.ZipFile(save_path, 'r') as zip_ref:
+        zip_ref.extractall(os.getcwd())
+
+    os.remove(save_path)
+
+    
+    messagebox.showinfo("Success", "Installed")
     # API 
-    if userid :
-        url = 'http://192.168.43.187/pdfadmin/API/create_branch.php'
-        data = {
-                'branch': userid,
-            }
-        result = call_api(url, data)
-        if result['Message']:
-            if result['Message']['Code'] == 200:
-                code = result['Message']['key']
-                file_path = r"C:\pdf_reader\key.txt"
-                if os.path.exists(file_path):
-                    try:
-                        with open(file_path, "a+") as f:
-                            f.seek(0)  # Move the cursor to the beginning of the file
-                            existing_content = f.read()
-                            if existing_content:
-                                f.truncate(0)
-                                f.write(code)
-                            else:
-                                f.write(code)
-                    except Exception as e:
-                        messagebox.showerror("Failed", f"Error occurred while creating or updating file: {e}")
-                else:
-                    try:
-                        with open(file_path, "w") as f:
-                            f.write(code)
-                    except Exception as e:
-                        messagebox.showerror("Failed", f"Error occurred while creating or updating file: {e}")
-                messagebox.showinfo("Success", "Successfully registered..")
-                root.destroy()
-            else:
-                messagebox.showerror("Failed", result['Message']['Message'])
-            
-        else:
-            messagebox.showerror("Failed", "Api Filed! Please try again")
-
-        # root.destroy()
-        # adminpage.welcomepage()
-    else:
-        messagebox.showerror("Failed", "Please fill branch name")
+    
 
 def call_api(url, data):
     try:
@@ -75,23 +51,13 @@ def call_api(url, data):
         messagebox.showerror("Failed", f"Exception: {e}")
         return False
         
-def run_script():
-    
+def run_script():    
 
-    userid = username_entry.get()
-    # password = password_entry.get()
-
-    
-
-    # current_directory = os.path.dirname(__file__)
-    # os.chmod("D:/2024/PDF/", 0o755)
-    # txt_file_path = os.path.join(current_directory, 'localpath.txt')
-    # with open("D:/2024/PDF/", 'r') as dire:
-    #     directory = dire.read()
+    userid = url_entry.get()
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("SETUP")
+    root.title("UPDATE FORM")
 
     # Set the window size and position
     window_width = 400
@@ -124,17 +90,12 @@ if __name__ == "__main__":
     title_label = tk.Label(frame, text="PDF Reader | CREDIT : SVJG", font=("Helvetica", 16))
     title_label.pack()
 
-    username_label = tk.Label(frame, text="Branch Name:")
-    username_label.pack()
+    url_label = tk.Label(frame, text="Update URL:")
+    url_label.pack()
 
-    username_entry = tk.Entry(frame)
-    username_entry.pack()
+    url_entry = tk.Entry(frame)
+    url_entry.pack()
 
-    # password_label = tk.Label(frame, text="Password:")
-    # password_label.pack()
-
-    # password_entry = tk.Entry(frame, show="*")
-    # password_entry.pack()
 
     login_button = tk.Button(frame, text="Add", command=validate_login)
     login_button.pack()

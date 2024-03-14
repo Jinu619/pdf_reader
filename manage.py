@@ -7,7 +7,6 @@ import re
 from ftplib import FTP
 import tkinter as tk
 import shutil
-import mysql.connector
 from tkinter import messagebox
 from googletrans import Translator
 import ast

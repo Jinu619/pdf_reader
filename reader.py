@@ -2,14 +2,12 @@
 import os
 import sys
 import requests
-import PyPDF2
 import re
 from ftplib import FTP
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import *
 # import adminpage
-import mysql.connector
 
 # Function to validate the login
 def validate_login():
@@ -18,7 +16,7 @@ def validate_login():
 
     # API 
     if userid :
-        url = 'http://192.168.43.187/pdfadmin/API/create_branch.php'
+        url = 'https://pdfadmin.000webhostapp.com/API/create_branch.php'
         data = {
                 'branch': userid,
             }
@@ -76,19 +74,7 @@ def call_api(url, data):
         return False
         
 def run_script():
-    
-
     userid = username_entry.get()
-    # password = password_entry.get()
-
-    
-
-    # current_directory = os.path.dirname(__file__)
-    # os.chmod("D:/2024/PDF/", 0o755)
-    # txt_file_path = os.path.join(current_directory, 'localpath.txt')
-    # with open("D:/2024/PDF/", 'r') as dire:
-    #     directory = dire.read()
-
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("SETUP")
@@ -129,12 +115,6 @@ if __name__ == "__main__":
 
     username_entry = tk.Entry(frame)
     username_entry.pack()
-
-    # password_label = tk.Label(frame, text="Password:")
-    # password_label.pack()
-
-    # password_entry = tk.Entry(frame, show="*")
-    # password_entry.pack()
 
     login_button = tk.Button(frame, text="Add", command=validate_login)
     login_button.pack()

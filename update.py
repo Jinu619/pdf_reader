@@ -1,59 +1,74 @@
-
-import os
-import sys
-import requests
-import PyPDF2
-import re
-from ftplib import FTP
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import *
+from tkinter import ttk,Canvas, Scrollbar, messagebox
+import requests
+import os
 import zipfile
-import io
-# import adminpage
+import threading
 
+def download_and_extract(url):
+    response = requests.get(url, stream=True)
+    total_length = response.headers.get('content-length')
 
-# Function to validate the login
-def validate_login():
-    url = url_entry.get()
-    response = requests.get(url)
+    if total_length is None:
+        total_length = 0
 
-    save_path = os.path.join(os.getcwd(), "downloaded_file.zip")
-    print(save_path)
+    save_path = os.path.join(os.getcwd(), "file.rar")
 
     with open(save_path, 'wb') as f:
-        f.write(response.content)
+        dl = 0
+        for data in response.iter_content(chunk_size=4096):
+            dl += len(data)
+            f.write(data)
+            percentage = int((dl / int(total_length)) * 100)
+            progress_bar['value'] = percentage
+            progress_label.config(text=f"Downloading: {percentage}%")
+            root.update_idletasks()
     
+    # unzipFile(save_path)
+
+    # os.remove(save_path)
+    progress_label.config(text="Completed!")
+    messagebox.showinfo("Success", "Installation Completed!")
+def unzipFile(save_path):
+    progress_label.config(text="Extracting...")
+    root.update_idletasks()
     with zipfile.ZipFile(save_path, 'r') as zip_ref:
-        zip_ref.extractall(os.getcwd())
+        total_files = len(zip_ref.filelist)
+        extracted_files = 0
+        for file_info in zip_ref.filelist:
+            filename = file_info.filename
+            extracted_files += 1
 
-    os.remove(save_path)
+            # Construct the full path of the extracted file
+            extracted_file_path = os.path.join(os.getcwd(), filename)
 
-    
-    messagebox.showinfo("Success", "Installed")
-    # API 
-    
+            # Check if the file already exists in the directory
+            if os.path.exists(extracted_file_path):
+                # Check if the extracted file is newer than the existing one
+                if os.path.getmtime(extracted_file_path) < file_info.date_time:
+                    # Delete the older file
+                    os.remove(extracted_file_path)
+                else:
+                    # If the existing file is newer, skip extraction
+                    continue
 
-def call_api(url, data):
-    try:
-        response = requests.post(url, json=data)
-        if response.status_code == 200:
-            # If the request was successful, return the response content
-            return response.json()
-        else:
-            # If there was an error, print the error code and message
-            print(f"Error: {response.status_code}, {response.text}")
-            messagebox.showerror("Failed", f"Error: {response.status_code}, {response.text}")
-            return False
-    except Exception as e:
-        # If an exception occurs, print the exception
-        print(f"Exception: {e}")
-        messagebox.showerror("Failed", f"Exception: {e}")
-        return False
-        
-def run_script():    
+            # Extract the file
+            zip_ref.extract(filename, os.getcwd())
 
-    userid = url_entry.get()
+            # Update progress
+            percentage = int((extracted_files / total_files) * 50) + 50  # Extraction progress from 50% to 100%
+            progress_bar['value'] = percentage
+            progress_label.config(text=f"Extracting: {percentage}%")
+            root.update_idletasks()
+    return True
+
+def validate_login():
+    url = url_entry.get()
+    threading.Thread(target=download_and_extract, args=(url,)).start()
+
+def run_script():
+    # Add your script here
+    pass
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -61,7 +76,7 @@ if __name__ == "__main__":
 
     # Set the window size and position
     window_width = 400
-    window_height = 200
+    window_height = 250
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     x = (screen_width - window_width) // 2  # Center the window horizontally
@@ -96,9 +111,14 @@ if __name__ == "__main__":
     url_entry = tk.Entry(frame)
     url_entry.pack()
 
-
-    login_button = tk.Button(frame, text="Add", command=validate_login)
+    login_button = tk.Button(frame, text="Download", command=validate_login)
     login_button.pack()
+
+    progress_bar = ttk.Progressbar(frame, orient="horizontal", length=200, mode="determinate")
+    progress_bar.pack()
+
+    progress_label = tk.Label(frame, text="")
+    progress_label.pack()
 
     run_script()
 
@@ -107,5 +127,3 @@ if __name__ == "__main__":
     canvas.config(scrollregion=canvas.bbox(tk.ALL))
 
     root.mainloop()
-    
-

@@ -115,7 +115,7 @@ def CheckCommon():
                 f.seek(0)
                 existing_content = f.read()
                 if existing_content:
-                    url = 'http://192.168.43.187/pdfadmin/API/validate_code.php'
+                    url = 'https://pdfadmin.000webhostapp.com/API/validate_code.php'
                     data = {
                             'code': existing_content,
                         }
@@ -126,30 +126,30 @@ def CheckCommon():
                         else:
                             message = "Invalid Key"
                             errorLog('','key', message)
-                            messagebox.showerror("Failed", message)
+                            messagebox.showerror("Error Key", message)
                             root.destroy()
                             sys.exit(1)
                     else:
                         message = "Api Falied"
                         errorLog('','Api', message)
-                        messagebox.showerror("Failed", message)
+                        messagebox.showerror("Api error", message)
                         root.destroy()
                         sys.exit(1)
                 else:
                     message = "Key is empty"
                     errorLog('','keyisempty', message)
-                    messagebox.showerror("Failed", message)
+                    messagebox.showerror("Key Error", message)
                     root.destroy()
                     sys.exit(1)
         except Exception as e:
             message = "Key file is missing or can't read"
             errorLog('','keyfile', message)
-            messagebox.showerror("Failed", message)
+            messagebox.showerror("Key Err", message)
             root.destroy()
             sys.exit(1)
     return key
 def errorLog(branch,error, message):
-    url = 'http://192.168.43.187/pdfadmin/API/getConstant.php'
+    url = 'https://pdfadmin.000webhostapp.com/API/getConstant.php'
     data = {
             'branch': branch,
             'error': error,
@@ -158,29 +158,31 @@ def errorLog(branch,error, message):
     result = call_api(url, data)
 
 def getConstants(key):
-    url = 'http://192.168.43.187/pdfadmin/API/getConstant.php'
+    url = 'https://pdfadmin.000webhostapp.com/API/getConstant.php'
     data = {
             'code': key,
         }
     result = call_api(url, data)
+    print(key)
     if result['Message']:
         if result['Message']['Code'] == 200:
             return result['Message']['content']
         else:
+            message =  result['Message']['Message']
             errorLog('','key', message)
-            messagebox.showerror("Failed", message)
+            messagebox.showerror("Api Error", message)
             root.destroy()
             sys.exit(1)
     else:
         message = "Api Falied"
         errorLog('','api', message)
-        messagebox.showerror("Failed", result['Message']['Message'])
+        messagebox.showerror("Api Failed", result['Message']['Message'])
         root.destroy()
         sys.exit(1)
 def run_script(label1, label2,label3,label4,label5):
 
     key = CheckCommon()
-    label5.config(text=key+"\n")
+    label5.config(text="key validated"+"\n")
     label5.update()
 
     
@@ -194,7 +196,7 @@ def run_script(label1, label2,label3,label4,label5):
 
     label4.config(text="-- Started --\n")
     label4.update()
-    first_text = "CREDIT : SVJG"    
+    first_text = "CREDIT : SVJG | V.1.0"
     label1.config(text=first_text)
 
     ################START eng msgs  ###################################
@@ -231,6 +233,8 @@ def run_script(label1, label2,label3,label4,label5):
                 try:
                     ftp = FTP(ftp_server, timeout=60)
                     ftp.login(ftp_user, ftp_password)
+                    ftp_folder = '/public_html/PDF/'
+                    ftp.cwd(ftp_folder)
                     with open(os.path.join(directory, pdf_file), 'rb') as file:
                         ftp.storbinary('STOR ' + pdf_file, file)
                         # Delete file from local server                        
@@ -246,12 +250,14 @@ def run_script(label1, label2,label3,label4,label5):
                 livepath = liveApiCreds['media_url'] + str(pdf_file)
                 url = liveApiCreds['url']
                 finalNumber = 919037000149
-                phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
-                phone_numbers_lists.append(finalNumber)
+                phone_numbers_lists = [919037000149]
+                if addPhoneNumbers:
+                    phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
+                # phone_numbers_lists.append(finalNumber)
                 apiArray = phone_numbers_lists
                 # apiArray = [finalNumber,966538530413]
                 for apinumber in apiArray:
-                    print (pdf_file,apinumber)
+                    print (pdf_file,apinumber,livepath)
                     data = {
                         'number': apinumber,
                         'type':'media',
@@ -260,18 +266,21 @@ def run_script(label1, label2,label3,label4,label5):
                         'instance_id':liveApiCreds['instance_id'],
                         'access_token':liveApiCreds['access_token'],
                         }  # Your data to be passed to the API #65D4BBD8EF4EF - liive ####### #65D3031F5CA94 - test
-                    #print(data)
                     result = call_api(url, data)
-                try:
-                    ftp = FTP(ftp_server, timeout=60)
-                    ftp.login(ftp_user, ftp_password)
-                    ftp.delete(pdf_file)
-                    ftp.quit()
-                except Exception as e:
-                    print("An error occurred:", e)
-                    errorLog(key,'ftp', "ftp error")
-                    root.destroy()
-                    sys.exit(1)
+                    print(result)
+
+                # try:
+                #     ftp = FTP(ftp_server, timeout=60)
+                #     ftp.login(ftp_user, ftp_password)
+                #     ftp_folder = '/public_html/PDF/'
+                #     ftp.cwd(ftp_folder)
+                #     ftp.delete(pdf_file)
+                #     ftp.quit()
+                # except Exception as e:
+                #     print("An error occurred:", e)
+                #     errorLog(key,'ftp', "ftp error")
+                #     root.destroy()
+                #     sys.exit(1)
                     #print(result)
             ###########################################################
             if  not filtered_numbers:
@@ -326,6 +335,8 @@ def run_script(label1, label2,label3,label4,label5):
                 try:
                     ftp = FTP(ftp_server, timeout=60)
                     ftp.login(ftp_user, ftp_password)
+                    ftp_folder = '/public_html/PDF/'
+                    ftp.cwd(ftp_folder)
                     with open(os.path.join(directory, pdf_file), 'rb') as file:
                         ftp.storbinary('STOR ' + pdf_file, file)
                         # Delete file from local server                        
@@ -341,8 +352,10 @@ def run_script(label1, label2,label3,label4,label5):
                 livepath = liveApiCreds['media_url'] + str(pdf_file)
                 url = liveApiCreds['url']
                 finalNumber = 919037000149
-                phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
-                phone_numbers_lists.append(finalNumber)
+                phone_numbers_lists = [919037000149]
+                if addPhoneNumbers:
+                    phone_numbers_lists = ast.literal_eval(addPhoneNumbers)
+                # phone_numbers_lists.append(finalNumber)
                 apiArray = phone_numbers_lists
                 # apiArray = [finalNumber,966538530413]
                 # arabic_translation = translate_to_arabic(liveApiCreds['arabic_content'])
@@ -357,11 +370,13 @@ def run_script(label1, label2,label3,label4,label5):
                         'instance_id':liveApiCreds['instance_id'],
                         'access_token':liveApiCreds['access_token'],
                         }  # Your data to be passed to the API #65D4BBD8EF4EF - liive ####### #65D3031F5CA94 - test
-                    #print(data)
+                    # print(data)
                     result = call_api(url, data)
                 try:
                     ftp = FTP(ftp_server, timeout=60)
                     ftp.login(ftp_user, ftp_password)
+                    ftp_folder = '/public_html/PDF/'
+                    ftp.cwd(ftp_folder)
                     ftp.delete(pdf_file)
                     ftp.quit()
                 except Exception as e:
@@ -391,7 +406,7 @@ def run_script(label1, label2,label3,label4,label5):
     
     label4.config(text="-- All Completed: Next Run after 2min --\n")
     label4.update()
-    # root.destroy()
+    root.destroy()
 
 
 
@@ -400,7 +415,7 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.title("PDF Reader")
 
-    # Set the window size and position
+    # Set the window size and position 
     window_width = 400
     window_height = 200
     screen_width = root.winfo_screenwidth()
